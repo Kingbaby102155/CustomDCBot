@@ -658,6 +658,7 @@ async function syncNativeAutoMod(client) {
             keywords.splice(1000);
         }
 
+        // AutoMod rule data
         const actions = [];
         const blockMetadata = {};
         if (config.autoModBlockMessage) {
@@ -706,6 +707,7 @@ async function syncNativeAutoMod(client) {
     }
 }
 
+// Makes the history embed
 async function generateHistoryResponse(client, userId, page = 1) {
     const storageConfig = client.configurations['ping-protection']['storage'];
     const limit = 5;
@@ -801,6 +803,7 @@ async function generateHistoryResponse(client, userId, page = 1) {
     };
 }
 
+// Makes the moderation actions history embed
 async function generateActionsResponse(client, userId, page = 1) {
     const moderationConfig = client.configurations['ping-protection']['moderation'];
     const limit = 5;
@@ -871,6 +874,7 @@ async function generateActionsResponse(client, userId, page = 1) {
     };
 }
 
+// Handles data deletion
 async function deleteAllUserData(client, userId) {
     await executeDataDeletion(client, userId, 'del_all');
     client.logger.info(localize('ping-protection', 'log-data-deletion', {
@@ -891,6 +895,7 @@ async function markUserAsRejoined(client, userId) {
     });
 }
 
+// Enforces data retention
 async function enforceRetention(client) {
     const storageConfig = client.configurations['ping-protection']['storage'];
     if (!storageConfig) return;
@@ -945,9 +950,11 @@ async function enforceRetention(client) {
     }
 }
 
+// Executes moderation action
 async function executeAction(client, member, rule, reason, storageConfig, originChannel = null, stats = {}) {
     const actionType = rule.actionType;
 
+    // Sends action log if enabled
     const sendActionLog = async () => {
         if (!rule.enableActionLogging || !originChannel) return;
 
@@ -975,6 +982,7 @@ async function executeAction(client, member, rule, reason, storageConfig, origin
         }
     };
 
+    // Sends error message if action fails
     const sendErrorLog = async (error) => {
         if (!originChannel) return;
 
@@ -1074,6 +1082,7 @@ async function executeAction(client, member, rule, reason, storageConfig, origin
     return false;
 }
 
+// Processes a ping event
 async function processPing(client, userId, targetId, isRole, messageUrl, originChannel, memberToPunish) {
     const config = client.configurations['ping-protection']['configuration'];
     const storageConfig = client.configurations['ping-protection']['storage'];

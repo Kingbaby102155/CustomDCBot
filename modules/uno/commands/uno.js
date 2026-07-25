@@ -483,6 +483,7 @@ module.exports.config = {
     defaultPermission: true
 };
 
+// Exposed for unit testing of the pure game rules.
 module.exports.__test = {
     canUseCard,
     nextPlayer,

@@ -8,6 +8,10 @@ module.exports.config = {
     description: localize('starboard', 'star-message-description')
 };
 
+/*
+ * Force-stars the right-clicked message by reusing handleStarboard() with options.force (bypasses the
+ * self-star removal and minStars threshold). Synthesizes the minimal msgReaction handleStarboard reads.
+ */
 module.exports.run = async function (interaction) {
     const target = interaction.targetMessage;
     const starConfig = interaction.client.configurations['starboard']['config'];

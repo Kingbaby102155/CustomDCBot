@@ -251,6 +251,7 @@ async function color(interaction, moduleStrings) {
     };
 }
 
+// Exported for unit testing of the colour-validation logic.
 module.exports.color = color;
 
 /**

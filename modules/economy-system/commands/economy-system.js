@@ -30,11 +30,13 @@ async function cooldown (command, duration, userId, client) {
         }
     });
     if (cooldownModel) {
+        // check cooldown duration
         if (cooldownModel.timestamp.getTime() + duration > Date.now()) return false;
         cooldownModel.timestamp = new Date();
         await cooldownModel.save();
         return true;
     } else {
+        // create the model
         await model.create({
             userId: userId,
             command: command,
@@ -97,7 +99,9 @@ async function adminGuard(interaction, user) {
     return true;
 }
 
-// Shared rob core: robs `user` on behalf of interaction.user. interaction.str/config must already be set.
+/*
+ * Shared rob core: robs `user` on behalf of interaction.user. interaction.str/config must already be set.
+ */
 async function robUser(interaction, user) {
     const robbedUser = await interaction.client.models['economy-system']['Balance'].findOne({
         where: {
@@ -129,7 +133,9 @@ async function robUser(interaction, user) {
     }));
 }
 
-// Shared "add money" core: adds `amount` to `user`'s wallet. Assumes the admin guard has passed.
+/*
+ * Shared "add money" core: adds `amount` to `user`'s wallet. Assumes the admin guard has passed.
+ */
 async function addMoney(interaction, user, amount) {
     await editBalance(interaction.client, user.id, 'add', parseInt(amount));
     respond(interaction, {
@@ -154,7 +160,9 @@ async function addMoney(interaction, user, amount) {
     }));
 }
 
-// Shared "remove money" core: removes `amount` from `user`'s wallet. Assumes the admin guard has passed.
+/*
+ * Shared "remove money" core: removes `amount` from `user`'s wallet. Assumes the admin guard has passed.
+ */
 async function removeMoney(interaction, user, amount) {
     await editBalance(interaction.client, user.id, 'remove', parseInt(amount));
     respond(interaction, {
@@ -179,7 +187,9 @@ async function removeMoney(interaction, user, amount) {
     }));
 }
 
-// Shared "set balance" core: sets `user`'s wallet to `amount`. Assumes the admin guard has passed.
+/*
+ * Shared "set balance" core: sets `user`'s wallet to `amount`. Assumes the admin guard has passed.
+ */
 async function setMoney(interaction, user, amount) {
     await editBalance(interaction.client, user.id, 'set', parseInt(amount));
     respond(interaction, {

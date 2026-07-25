@@ -17,9 +17,13 @@ const {
 } = require('./staff-management');
 
 /*
- * Shared core for the staff-management USER context-menu commands, routing submitted modal/select
- * data into the same cores the slash subcommands call. Those cores defer and editReply themselves,
- * so neither the run() adapters nor the submit handlers may defer first.
+ * Shared core for the staff-management USER context-menu commands. Each command is a thin adapter
+ * that shows a modal/select; the submitted data is then routed back here and handed to the same
+ * issueInfraction / promoteUser / submitReview cores the slash subcommands call, so the output is
+ * identical. The cores call interaction.deferReply() and editReply() themselves, so the run()
+ * adapters must NOT defer before showing the modal/select, and the submit handlers must NOT defer
+ * before invoking the core. Supervisor gating for infract/promote is enforced both up-front here
+ * (so unauthorized users never see a modal) and again inside the cores.
  */
 
 const SUPERVISOR = 'supervisor';
@@ -29,7 +33,12 @@ function isSupervisor(client, member) {
     return checkStaffPermissions(member, getConfig(client, 'configuration'), SUPERVISOR);
 }
 
-// Modal interactions have no interaction.options, but promoteUser reads getChannel('channel').
+/*
+ * Discord modal interactions have no interaction.options; promoteUser reads the optional
+ * announcement-channel override via interaction.options.getChannel('channel'). The context flow
+ * has no such option, so we wrap the submit interaction with an options shim returning null,
+ * leaving every other property delegated to the real interaction.
+ */
 function withOptionsShim(interaction) {
     return new Proxy(interaction, {
         get(target, prop) {
@@ -40,6 +49,7 @@ function withOptionsShim(interaction) {
     });
 }
 
+// ----- Issue Infraction (modal) -----
 function buildInfractionModal(client, userId) {
     const types = getConfig(client, 'infractions')?.infractionTypes || [];
     const selectable = types.filter(infractionType => infractionType.toLowerCase() !== 'suspension');
@@ -102,6 +112,7 @@ async function handleInfractionModal(client, interaction, userId) {
     return issueInfraction(client, interaction, targetMember, type, reason, expiry || null);
 }
 
+// ----- Promote User (role select) -----
 function buildPromoteSelect(userId) {
     return {
         flags: MessageFlags.Ephemeral,
@@ -136,6 +147,7 @@ async function handlePromoteSelect(client, interaction, userId) {
     return promoteUser(client, withOptionsShim(interaction), targetMember, role, null);
 }
 
+// ----- Submit Review (modal) -----
 function buildReviewModal(userId) {
     const modal = new ModalBuilder()
         .setCustomId(`staff-mgmt_ctx-review_${userId}`)
