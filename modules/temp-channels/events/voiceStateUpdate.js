@@ -9,7 +9,6 @@ module.exports.run = async function (client, oldState, newState) {
     if (!client.botReadyAt) return;
     const moduleConfig = client.configurations['temp-channels']['config'];
 
-    // Handle channel leave — delete or archive
     if (oldState.channel) {
         const oldChannel = await client.models['temp-channels']['TempChannel'].findOne({
             where: {id: oldState.channel.id}
@@ -20,7 +19,6 @@ module.exports.run = async function (client, oldState, newState) {
                     const dcOldChannel = await client.channels.fetch(oldChannel.id).catch(() => null);
                     if (dcOldChannel && dcOldChannel.members.size === 0) {
                         if (moduleConfig.enableArchiving && moduleConfig.archiveCategory) {
-                            // Archive: move to archive category, strip permissions
                             await dcOldChannel.setParent(moduleConfig.archiveCategory, {
                                 lockPermissions: false,
                                 reason: '[temp-channels] Archiving empty temp channel'
@@ -60,7 +58,6 @@ module.exports.run = async function (client, oldState, newState) {
                             oldChannel.archivedAt = new Date();
                             await oldChannel.save();
                         } else {
-                            // Delete channel
                             if (oldChannel.noMicChannel) {
                                 const noMicChannel = await client.channels.fetch(oldChannel.noMicChannel).catch(() => null);
                                 if (noMicChannel) await noMicChannel.delete(`[temp-channels] ${localize('temp-channels', 'removed-audit-log-reason')}`).catch(() => {
@@ -80,7 +77,6 @@ module.exports.run = async function (client, oldState, newState) {
         }
     }
 
-    // No-mic channel visibility sync
     if (moduleConfig['create_no_mic_channel']) {
         const possibleExistingChannel = await client.models['temp-channels']['TempChannel'].findOne({
             where: {
@@ -101,13 +97,11 @@ module.exports.run = async function (client, oldState, newState) {
     if (!newState.channel) return;
 
     if (newState.channel.id === moduleConfig['channelID']) {
-        // Check for existing channel (active or archived)
         const existingChannel = await client.models['temp-channels']['TempChannel'].findOne({
             where: {creatorID: newState.member.user.id}
         });
 
         if (existingChannel) {
-            // Restore from archive if needed
             if (existingChannel.archivedAt) {
                 const dcChannel = await client.channels.fetch(existingChannel.id).catch(() => null);
                 if (dcChannel) {
@@ -116,7 +110,6 @@ module.exports.run = async function (client, oldState, newState) {
                         reason: '[temp-channels] Restoring archived channel'
                     }).catch(() => {
                     });
-                    // Re-apply permissions based on saved mode
                     if (!existingChannel.isPublic) {
                         await dcChannel.permissionOverwrites.create(dcChannel.guild.roles.everyone, {
                             'CONNECT': false,
@@ -175,7 +168,6 @@ module.exports.run = async function (client, oldState, newState) {
                     await existingChannel.destroy();
                 }
             } else {
-                // Active channel exists, move user there
                 return newState.setChannel(existingChannel.id, '[temp-channels] ' + localize('temp-channels', 'move-audit-log-reason')).catch(() => {
                     newState.setChannel(null, '[temp-channels] ' + localize('temp-channels', 'disconnect-audit-log-reason'));
                     existingChannel.destroy();
@@ -183,7 +175,6 @@ module.exports.run = async function (client, oldState, newState) {
             }
         }
 
-        // Channel limit check
         if (moduleConfig.enableMaxActiveChannels && moduleConfig.maxActiveChannels > 0) {
             const activeCount = await client.models['temp-channels']['TempChannel'].count({where: {archivedAt: null}});
             if (activeCount >= moduleConfig.maxActiveChannels) {
@@ -197,7 +188,6 @@ module.exports.run = async function (client, oldState, newState) {
             }
         }
 
-        // Create new channel
         const n = await client.models['temp-channels']['TempChannel'].count({}) + 1;
         const newChannel = await newState.guild.channels.create({
             name: moduleConfig['channelname_format']
@@ -237,7 +227,6 @@ module.exports.run = async function (client, oldState, newState) {
             if (moduleConfig['useNoMic']) await sendMessage(noMicChannel);
         }
 
-        // Apply private permissions if default is private
         if (!moduleConfig['publicChannels']) {
             await newChannel.permissionOverwrites.create(newState.guild.roles.everyone, {
                 'CONNECT': false,

@@ -15,10 +15,6 @@ module.exports.config = {
     description: localize('economy-system', 'add-money-context-description')
 };
 
-/*
- * /economy add adapter: runs the slash admin guard, then opens the amount modal (customId encodes
- * action + target) handled in events/interactionCreate.js. showModal must be first, so no defer.
- */
 module.exports.run = async function (interaction) {
     interaction.str = interaction.client.configurations['economy-system']['strings'];
     interaction.config = interaction.client.configurations['economy-system']['config'];

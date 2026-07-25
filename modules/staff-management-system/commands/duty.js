@@ -644,7 +644,6 @@ async function buildDutyAdminPayload(client, targetMember, requestingMember) {
     };
 }
 
-// ----- Button handlers -----
 async function handleDutyStartButton(client, interaction) {
     const parts = interaction.customId.split('_');
     const userId = parts[2];
@@ -896,7 +895,6 @@ async function handleDutyLbPageButton(client, interaction) {
     return interaction.editReply(payload);
 }
 
-// ----- Admin handler -----
 async function handleDutyAdminForceEnd(client, interaction) {
     const permCheck = checkDutyAdminPermission(client, interaction);
     if (permCheck) return permCheck;
@@ -1205,7 +1203,6 @@ async function handleDutyAdminAddTimeSubmit(client, interaction) {
     });
 }
 
-// ----- Dropdown handler -----
 async function handleDutyDropdown(client, interaction, action, selectedType) {
     if (action === 'manage') {
         const payload = await buildDutyManagePayload(client, interaction.user.id, selectedType);
@@ -1541,7 +1538,6 @@ module.exports.config = {
     ]
 };
 
-// Export handlers
 module.exports.buttonHandlers = {
     handleDutyStartButton,
     handleDutyAdminAddTimeButton,
@@ -1557,7 +1553,6 @@ module.exports.buttonHandlers = {
     handleDutyAdminAddTimeSubmit
 };
 
-// Exported for unit testing of the pure duty helpers.
 module.exports._test = {
     getLookbackDate,
     canUseDutyAdmin,

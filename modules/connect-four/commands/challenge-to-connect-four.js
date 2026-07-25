@@ -9,12 +9,6 @@ module.exports.config = {
     description: localize('connect-four', 'challenge-to-connect-four-context-description')
 };
 
-/*
- * Thin adapter: /connect-four run() resolves its opponent via interaction.options.getMember('user')
- * and an optional field_size via getInteger('field_size') (defaulting to 7). We reuse run()
- * unchanged by handing it the real interaction with those option reads overridden so the
- * challenge and game flow is identical, against the right-clicked user with the default field size.
- */
 module.exports.run = async function (interaction) {
     if (!memberCanSendInChannel(interaction.member, interaction.channel)) return interaction.reply({
         ephemeral: true,

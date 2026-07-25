@@ -8,7 +8,6 @@ module.exports.run = async function () {
     const moduleConfig = client.configurations['temp-channels']['config'];
     const settingsChannel = client.channels.cache.get(moduleConfig['settingsChannel']);
 
-    // Cleanup orphaned temp channels on startup
     const tempChannels = await client.models['temp-channels']['TempChannel'].findAll();
     let cleanedCount = 0;
     for (const tempChannel of tempChannels) {
@@ -38,7 +37,6 @@ module.exports.run = async function () {
         client.logger.info(`[temp-channels] Cleaned up ${cleanedCount} empty or orphaned temp channel(s) on startup`);
     }
 
-    // Schedule archive cleanup job (every hour)
     if (moduleConfig.enableArchiving && moduleConfig.archiveDeleteAfterHours > 0) {
         const archiveCleanupJob = scheduleJob('0 * * * *', async () => {
             const cutoff = new Date(Date.now() - moduleConfig.archiveDeleteAfterHours * 3600000);

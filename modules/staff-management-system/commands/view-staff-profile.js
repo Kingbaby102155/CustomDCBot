@@ -9,11 +9,6 @@ module.exports.config = {
     description: localize('staff-management-system', 'view-staff-profile-description')
 };
 
-/*
- * Thin adapter: defer ephemerally (handleProfileView responds via editReply) and hand off to
- * the shared handleProfileView core, exactly like the /staff-management profile view subcommand,
- * so the rendered staff profile is identical for the targeted user.
- */
 module.exports.run = async function (interaction) {
     await interaction.deferReply({
         flags: MessageFlags.Ephemeral

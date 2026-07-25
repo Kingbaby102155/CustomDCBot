@@ -21,7 +21,6 @@ const {
     checkStaffPermissions
 } = require('../staff-management');
 
-// ---------- Status DM's and logging ----------
 async function sendStatusDm(user, type, dmType, data = {}) {
     const label = type === 'LOA'
         ? 'LoA'
@@ -33,7 +32,6 @@ async function sendStatusDm(user, type, dmType, data = {}) {
         ? `<t:${Math.floor(new Date(data.endDate).getTime() / 1000)}:F>`
     : '';
 
-    // These messages use the locales key to be easily used later
     const messages = {
         approved: {
             title: 'dm-appr-title',
@@ -171,7 +169,6 @@ async function logStatusChange(client, type, action, data) {
     }
 }
 
-// ----- Status -----
 const getStatusMeta = (type) => ({
     isLoa: type === 'LOA',
     label: type === 'LOA'

@@ -625,11 +625,19 @@ async function syncNativeAutoMod(client) {
 
         const protectedIdsSet = new Set(config.protectedUsers || []);
         if (config.protectAllUsersWithProtectedRole && config.protectedRoles && config.protectedRoles.length > 0) {
-            guild.members.cache.forEach(member => {
-                if (member.roles.cache.some(r => config.protectedRoles.includes(r.id))) {
-                    protectedIdsSet.add(member.id);
-                }
-            });
+
+            // Without GuildMembers the member cache is near-empty, so enumerating it would seed the
+            // native AutoMod rule with an incomplete protected-user list. Skip and warn instead; the
+            // real-time mention-based detection does not use the member cache and is unaffected.
+            if ((guild.client._activeIntents || []).includes('GuildMembers')) {
+                guild.members.cache.forEach(member => {
+                    if (member.roles.cache.some(r => config.protectedRoles.includes(r.id))) {
+                        protectedIdsSet.add(member.id);
+                    }
+                });
+            } else {
+                client.logger.warn(localize('ping-protection', 'log-automod-role-protection-skipped'));
+            }
         }
 
         protectedIdsSet.forEach(id => {
@@ -650,7 +658,6 @@ async function syncNativeAutoMod(client) {
             keywords.splice(1000);
         }
 
-        // AutoMod rule data
         const actions = [];
         const blockMetadata = {};
         if (config.autoModBlockMessage) {
@@ -699,7 +706,6 @@ async function syncNativeAutoMod(client) {
     }
 }
 
-// Makes the history embed
 async function generateHistoryResponse(client, userId, page = 1) {
     const storageConfig = client.configurations['ping-protection']['storage'];
     const limit = 5;
@@ -795,7 +801,6 @@ async function generateHistoryResponse(client, userId, page = 1) {
     };
 }
 
-// Makes the moderation actions history embed
 async function generateActionsResponse(client, userId, page = 1) {
     const moderationConfig = client.configurations['ping-protection']['moderation'];
     const limit = 5;
@@ -866,7 +871,6 @@ async function generateActionsResponse(client, userId, page = 1) {
     };
 }
 
-// Handles data deletion
 async function deleteAllUserData(client, userId) {
     await executeDataDeletion(client, userId, 'del_all');
     client.logger.info(localize('ping-protection', 'log-data-deletion', {
@@ -887,7 +891,6 @@ async function markUserAsRejoined(client, userId) {
     });
 }
 
-// Enforces data retention
 async function enforceRetention(client) {
     const storageConfig = client.configurations['ping-protection']['storage'];
     if (!storageConfig) return;
@@ -942,11 +945,9 @@ async function enforceRetention(client) {
     }
 }
 
-// Executes moderation action
 async function executeAction(client, member, rule, reason, storageConfig, originChannel = null, stats = {}) {
     const actionType = rule.actionType;
 
-    // Sends action log if enabled
     const sendActionLog = async () => {
         if (!rule.enableActionLogging || !originChannel) return;
 
@@ -974,7 +975,6 @@ async function executeAction(client, member, rule, reason, storageConfig, origin
         }
     };
 
-    // Sends error message if action fails
     const sendErrorLog = async (error) => {
         if (!originChannel) return;
 
@@ -1074,7 +1074,6 @@ async function executeAction(client, member, rule, reason, storageConfig, origin
     return false;
 }
 
-// Processes a ping event
 async function processPing(client, userId, targetId, isRole, messageUrl, originChannel, memberToPunish) {
     const config = client.configurations['ping-protection']['configuration'];
     const storageConfig = client.configurations['ping-protection']['storage'];

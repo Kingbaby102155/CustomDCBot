@@ -39,7 +39,6 @@ module.exports.run = async (client, interaction) => {
         const parts = interaction.customId.split('_');
         const action = parts[1];
 
-        // ----- USER context-menu submits (Issue Infraction / Promote User / Submit Review) -----
         if (action === 'ctx-infract' && interaction.isModalSubmit()) {
             return require('../context-actions').handleInfractionModal(client, interaction, parts[2]);
         }
@@ -50,7 +49,6 @@ module.exports.run = async (client, interaction) => {
             return require('../context-actions').handleReviewModal(client, interaction, parts[2]);
         }
 
-        // ----- Duty manage handlers -----
         if (interaction.customId.startsWith('duty-mgmt_')) {
             const dutyAction = parts[1];
 
@@ -77,7 +75,6 @@ module.exports.run = async (client, interaction) => {
             return;
         }
 
-        // ----- Review history pagination -----
         if (action === 'rev-page') {
             await interaction.deferUpdate();
             const targetUser = await client.users.fetch(parts[2]).catch(() => null);
@@ -91,7 +88,6 @@ module.exports.run = async (client, interaction) => {
             return interaction.editReply(payload);
         }
 
-        // ----- LOA/RA handlers -----
         const loaActions = ['loa-end', 'loa-end-submit', 'loa-extend', 'loa-extend-submit', 'loa-hist'];
         const raActions  = ['ra-end',  'ra-end-submit',  'ra-extend',  'ra-extend-submit',  'ra-hist'];
 
@@ -106,7 +102,6 @@ module.exports.run = async (client, interaction) => {
             if (base === 'hist')          return handleStatusHistPage(client, interaction, type);
         }
 
-        // ----- Promotion history pagination -----
         if (action === 'prom-hist') {
             await interaction.deferUpdate();
             const targetUser = await client.users.fetch(parts[2]).catch(() => null);
@@ -120,7 +115,6 @@ module.exports.run = async (client, interaction) => {
             return interaction.editReply(payload);
         }
 
-        // ----- Infraction history pagination -----
         if (action === 'inf-hist') {
             await interaction.deferUpdate();
             const targetUser = await client.users.fetch(parts[2]).catch(() => null);
@@ -134,7 +128,6 @@ module.exports.run = async (client, interaction) => {
             return interaction.editReply(payload);
         }
 
-        // ----- User panel dropdown -----
         if (interaction.customId.startsWith('staff-mgmt_panel-menu_')) {
             const targetId = interaction.customId.split('_')[2];
             await interaction.deferUpdate();
@@ -158,7 +151,6 @@ module.exports.run = async (client, interaction) => {
             return interaction.editReply(payload);
         }
 
-        // ----- User panel deletion dropdown -----
         if (interaction.customId.startsWith('staff-mgmt_delete-menu_')) {
             const targetId = interaction.customId.split('_')[2];
             const selection = interaction.values[0];
@@ -200,7 +192,6 @@ module.exports.run = async (client, interaction) => {
             return interaction.showModal(modal);
         }
 
-        // ----- Data deletion modal submission -----
         if (interaction.isModalSubmit() && interaction.customId.startsWith('staff-mgmt_del-confirm_')) {
             await interaction.deferReply({flags: MessageFlags.Ephemeral});
             const configuration = getConfig(client, 'configuration');
@@ -326,7 +317,6 @@ module.exports.run = async (client, interaction) => {
             });
         }
 
-        // ----- User panel buttons -----
         if (interaction.customId.startsWith('staff-mgmt_panel-')) {
             const parts = interaction.customId.split('_');
             const targetId = parts[2];
@@ -353,7 +343,6 @@ module.exports.run = async (client, interaction) => {
             }
         }
 
-        // ----- Status buttons -----
         const LoARequest = client.models['staff-management-system']['LoaRequest'];
         const StaffProfile = client.models['staff-management-system']['StaffProfile'];
         const config = client.configurations['staff-management-system']['configuration'];
@@ -444,7 +433,6 @@ module.exports.run = async (client, interaction) => {
             }
         }
 
-        // ----- Deny modal submission -----
         if (interaction.isModalSubmit() && action === 'loa-deny') {
             const configuration = getConfig(client, 'configuration');
 
@@ -513,7 +501,6 @@ module.exports.run = async (client, interaction) => {
             });
         }
 
-        // ----- Profile edit submission -----
         if (interaction.isModalSubmit() && action === 'profile-edit') {
             const nickname = interaction.fields.getTextInputValue('nickname');
             const intro = interaction.fields.getTextInputValue('intro');
@@ -530,7 +517,6 @@ module.exports.run = async (client, interaction) => {
             });
         }
 
-        // ----- Activity checks button -----
         if (action === 'ac-respond') {
             const ActivityCheck = client.models['staff-management-system']['ActivityCheck'];
             const ActivityCheckResponse = client.models['staff-management-system']['ActivityCheckResponse'];

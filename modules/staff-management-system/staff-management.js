@@ -9,7 +9,6 @@ const schedule = require('node-schedule');
 const {embedTypeV2, safeSetFooter, dateToDiscordTimestamp} = require('../../src/functions/helpers');
 const { localize } = require('../../src/functions/localize');
 
-// --- Local helpers ---
 const getConfig = (client, file) => client.configurations['staff-management-system'][file];
 const getSafeChannelId = (val) => Array.isArray(val) && val.length > 0 // Helper to get safe channel ID from config
     ? val[0]
@@ -111,7 +110,6 @@ function formatDuration(seconds) {
     return parts.join(', ') || localize('staff-management-system', 'time-zero');
 }
 
-// ---------- Infractions ----------
 async function issueInfraction(client, interaction, targetMember, type, reason, expiryInput) {
     await interaction.deferReply({ephemeral: true});
     const config = getConfig(client, 'infractions');
@@ -223,7 +221,6 @@ async function issueInfraction(client, interaction, targetMember, type, reason, 
     });
 }
 
-// ---------- Suspensions ----------
 async function issueSuspension(client, interaction, targetMember, durationInput, reason) {
     await interaction.deferReply({ephemeral: true});
     const config = getConfig(client, 'infractions');
@@ -385,7 +382,6 @@ async function resolveInfractionReference(client, reference) {
     }
 }
 
-// ----- Infractions voiding -----
 async function voidInfraction(client, interaction, reference) {
     await interaction.deferReply({ephemeral: true});
     const config = getConfig(client, 'infractions');
@@ -438,7 +434,6 @@ async function voidInfraction(client, interaction, reference) {
     });
 }
 
-// ----- Generates infractions history embed -----
 async function generateInfractionHistoryResponse(client, targetUser, page = 1) {
     const limit = 5;
     const offset = (page - 1) * limit;
@@ -494,7 +489,6 @@ async function generateInfractionHistoryResponse(client, targetUser, page = 1) {
     return { embeds: [embed.toJSON()], components: [row.toJSON()] };
 }
 
-// ----- Gets infraction history -----
 async function getInfractionHistory(client, interaction, targetUser) {
     await interaction.deferReply({ephemeral: true});
     const response = await generateInfractionHistoryResponse(client, targetUser, 1);
@@ -504,7 +498,6 @@ async function getInfractionHistory(client, interaction, targetUser) {
     });
 }
 
-// ---------- Promotions ----------
 async function promoteUser(client, interaction, targetMember, newRole, reason) {
     await interaction.deferReply({ephemeral: true});
     const config = getConfig(client, 'promotions');
@@ -636,7 +629,6 @@ async function promoteUser(client, interaction, targetMember, newRole, reason) {
     });
 }
 
-// ----- Generates promotion history & embed -----
 async function generatePromotionHistoryResponse(client, targetUser, page = 1) {
     const Promotion = client.models['staff-management-system']['Promotion'];
     const limit = 5;
@@ -693,7 +685,6 @@ async function getPromotionHistory(client, interaction, targetUser) {
     });
 }
 
-// ---------- User Panel ----------
 async function generatePanelSubpage(client, targetUser, type, page) {
     if (type === 'infractions') return await generatePanelInfractions(client, targetUser, page);
     if (type === 'promotions') return await generatePanelPromotions(client, targetUser, page);
@@ -1344,7 +1335,6 @@ async function executeDataDeletion(client, targetId, dataType) {
     }
 }
 
-// ---------- Activity Checks ----------
 async function startActivityCheck(client, interactionOrChannel, isAutomated = false) {
     const config = getConfig(client, 'activity-checks');
     const ActivityCheck = client.models['staff-management-system']['ActivityCheck'];
@@ -1606,7 +1596,6 @@ function initActivityCheckAutomation(client) {
     });
 }
 
-// ---------- Reviews ----------
 async function submitReview(client, interaction, targetUser, stars, comment) {
     await interaction.deferReply({ephemeral: true});
     const config = getConfig(client, 'reviews');
