@@ -28,6 +28,7 @@
     "age-calculator": "1.0.0",
     "centra": "2.7.0",
     "discord-api-types": "^0.38.47",
+    "discord-html-transcripts": "^3.2.0",
     "discord.js": "14.26.4",
     "fparser": "^4.2.0",
     "is-equal": "^1.6.4",
@@ -53,5 +54,12 @@
   },
   "overrides": {
     "uuid": "^11.1.1"
+  },
+  "allowScripts": {
+    "bufferutil@4.1.0": true,
+    "fsevents@2.3.3": true,
+    "sqlite3@6.0.1": true,
+    "unrs-resolver@1.12.2": true,
+    "utf-8-validate@6.0.6": true
   }
 }

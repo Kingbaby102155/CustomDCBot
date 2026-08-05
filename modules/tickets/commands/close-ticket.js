@@ -1,34 +1,23 @@
-const {localize} = require('../../../src/functions/localize');
-const {closeTicket} = require('../events/interactionCreate');
+const TicketManager = require('../services/TicketManager');
 
-module.exports.config = {
-    name: 'Close Ticket',
-    type: 'MESSAGE',
-    contextMenu: true,
-    defaultMemberPermissions: ['MANAGE_CHANNELS'],
-    description: localize('tickets', 'context-close-description')
-};
+module.exports = {
+    name: 'close',
+    description: 'Closes an active support ticket.',
+    category: 'Tickets',
+    async execute(message, args, client) {
+        const TicketModel = client.models.Ticket;
 
-/*
- * "close-ticket" button-flow adapter: resolves the open Ticket for interaction.channel and hands it to
- * the shared closeTicket() core. Replies ephemerally if the channel is not a ticket channel.
- */
-module.exports.run = async function (interaction) {
-    const client = interaction.client;
-    const ticket = await client.models['tickets']['Ticket'].findOne({
-        where: {
-            channelID: interaction.channel.id,
-            open: true
+        const dbTicket = await TicketModel.findOne({ where: { channelId: message.channel.id, status: 'OPEN' } });
+        if (!dbTicket) {
+            return message.reply('This channel is not an active ticket or has already been archived.');
         }
-    });
-    if (!ticket) return interaction.reply({
-        ephemeral: true,
-        content: '⚠️ ' + localize('tickets', 'context-not-a-ticket')
-    });
-    const element = client.configurations['tickets']['config'][ticket.type];
-    if (!element) return interaction.reply({
-        ephemeral: true,
-        content: '⚠️ ' + localize('tickets', 'context-not-a-ticket')
-    });
-    return closeTicket(client, interaction, ticket, element);
+
+        try {
+            await message.reply('Archiving logs and shutting down this ticket channel...');
+            await TicketManager.closeTicket(message.channel, dbTicket, client);
+        } catch (error) {
+            console.error('Failed to properly shut down ticket channel:', error);
+            message.reply('An unexpected error occurred while trying to close this ticket.');
+        }
+    }
 };

@@ -1,38 +1,25 @@
-const {DataTypes, Model} = require('sequelize');
-
-module.exports = class Ticket extends Model {
-    static init(sequelize) {
-        return super.init({
-            id: {
-                type: DataTypes.INTEGER,
-                primaryKey: true,
-                autoIncrement: true
-            },
-            open: {
-                type: DataTypes.STRING,
-                defaultValue: true
-            },
-            userID: DataTypes.STRING,
-            channelID: DataTypes.STRING,
-            msgLogURL: DataTypes.STRING,
-            msgCount: {
-                type: DataTypes.INTEGER,
-                defaultValue: 0
-            },
-            addedUsers: {
-                type: DataTypes.JSON,
-                defaultValue: []
-            },
-            type: DataTypes.STRING
-        }, {
-            tableName: 'ticket_Ticketv2',
-            timestamps: true,
-            sequelize
-        });
-    }
-};
-
-module.exports.config = {
-    'name': 'Ticket',
-    'module': 'tickets'
+module.exports = (sequelize, DataTypes) => {
+    return sequelize.define('Ticket', {
+        id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true
+        },
+        channelId: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true
+        },
+        userId: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
+        status: {
+            type: DataTypes.ENUM('OPEN', 'CLOSED'),
+            defaultValue: 'OPEN',
+            allowNull: false
+        }
+    }, {
+        timestamps: true
+    });
 };
