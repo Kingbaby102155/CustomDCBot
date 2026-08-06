@@ -6,24 +6,24 @@ module.exports = {
     name: 'unclaim',
     description: 'Releases a claimed ticket back to the general support pool.',
     category: 'Tickets',
-    async execute(message, args, client) {
+    async run(interaction, args, client) {
         const TicketModel = client.models.Ticket;
 
         // 1. Staff validation check
-        if (!message.member.roles.cache.has(config.staff_role_id) && !message.member.permissions.has(PermissionFlagsBits.Administrator)) {
-            return message.reply('You do not have permission to use this command.');
+        if (!interaction.member.roles.cache.has(config.staff_role_id) && !interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+            return interaction.reply('You do not have permission to use this command.');
         }
 
         // 2. Locate active ticket record
-        const dbTicket = await TicketModel.findOne({ where: { channelId: message.channel.id, status: 'OPEN' } });
+        const dbTicket = await TicketModel.findOne({ where: { channelId: interaction.channel.id, status: 'OPEN' } });
         if (!dbTicket) {
-            return message.reply('This command can only be used inside an active, open ticket channel.');
+            return interaction.reply('This command can only be used inside an active, open ticket channel.');
         }
 
         try {
             // 3. Restore view permissions back to the generic staff role
-            await message.channel.permissionOverwrites.set([
-                { id: message.guild.id, deny: [PermissionFlagsBits.ViewChannel] },
+            await interaction.channel.permissionOverwrites.set([
+                { id: interaction.guild.id, deny: [PermissionFlagsBits.ViewChannel] },
                 { id: dbTicket.userId, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] },
                 { id: config.staff_role_id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory] }
             ]);
@@ -35,10 +35,10 @@ module.exports = {
                 .setColor('#e67e22')
                 .setTimestamp();
 
-            await message.reply({ embeds: [unclaimEmbed] });
+            await interaction.reply({ embeds: [unclaimEmbed] });
         } catch (error) {
             console.error('Failed to restore permissions during unclaim:', error);
-            message.reply('An error occurred while opening this channel back up to the staff role.');
+            await interaction.reply('An error occurred while opening this channel back up to the staff role.');
         }
     }
 };
