@@ -1,4 +1,6 @@
 {
+  "ticket_category_id": "123456789012345678",
+  "archive_category_id": "876543210987654321",
   "staff_role_id": "112233445566778899",
   "log_channel_id": "998877665544332211",
   "max_open_tickets": 3,
@@ -23,8 +25,28 @@
     "check_interval_minutes": 5,
     "warn_after_minutes": 60,
     "close_after_minutes": 120,
-    "warn_message": "⚠️ Hello {user}, this ticket has been inactive for over an hour. It will automatically close in {time} minutes if no response is received.",
+    "warn_message": "⚠️ Hello {user}, this ticket has been inactive. It will automatically close in {time} minutes if no response is received.",
     "close_message": "🔒 This ticket has been automatically closed due to prolonged inactivity."
   },
-  "categories": []
+  "categories": [
+    {
+      "id": "general_support",
+      "label": "General Support",
+      "description": "Questions regarding rules or general inquiries.",
+      "emoji": "💬",
+      "category_id": "123456789012345678",
+      "custom_staff_role": "112233445566778899",
+      "questions": [
+        { 
+          "id": "username", 
+          "label": "In-Game Username:", 
+          "style": "SHORT", 
+          "required": true,
+          "placeholder": "e.g., ScootKit_Dev",
+          "min_length": 3,
+          "max_length": 16
+        }
+      ]
+    }
+  ]
 }
