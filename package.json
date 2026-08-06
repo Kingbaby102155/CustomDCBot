@@ -7,14 +7,11 @@
     "type": "git",
     "url": "https://github.com/ScootKit/CustomDCBot.git"
   },
-  "scripts": {
-    "start": "node main.js",
-    "test": "npx eslint ./",
+    "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "test:unit": "jest tests/ --pathIgnorePatterns=tests/tickets/",
-    "lint": "npx eslint ./",
-    "verify-configs": "node scripts/verify-config-defaults.js",
-    "generate-config": "node generate-config.js",
-    "generate-template": "node generate-template.js"
+    "verify-configs": "node src/functions/verifyModuleConfigs.js"
   },
   "author": "ScootKit Team",
   "contributors": [
