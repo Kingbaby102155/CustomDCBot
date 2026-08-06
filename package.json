@@ -58,10 +58,5 @@
     "sqlite3@6.0.1": true,
     "unrs-resolver@1.1.2.2": true,
     "utf-8-validate@6.0.6": true
-  },
-  "jest": {
-    "modulePathIgnorePatterns": [
-      "<rootDir>/tests/tickets"
-    ]
   }
 }
