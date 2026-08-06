@@ -10,7 +10,7 @@
     "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test:unit": "jest tests/ --pathIgnorePatterns=tests/tickets/",
+    "test:unit": "jest tests/",
     "verify-configs": "node src/functions/verifyModuleConfigs.js"
   },
   "author": "ScootKit Team",
