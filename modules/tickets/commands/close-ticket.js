@@ -1,10 +1,21 @@
 // modules/tickets/commands/close-ticket.js
 const TicketManager = require('../services/TicketManager');
 
+// Define the core function as a separate variable first
+async function closeTicket(client, interaction, dbTicket, config) {
+    // Keep it functional for your live bot environment
+    const targetChannel = interaction.channel || client.channels.cache.get(interaction.channelId);
+    return await TicketManager.closeTicket(targetChannel, dbTicket, client);
+}
+
 module.exports = {
     name: 'close',
     description: 'Closes an active support ticket.',
     category: 'Tickets',
+    
+    // Explicitly expose the inner function directly on the exported object properties
+    closeTicket: closeTicket,
+
     async run(interaction) {
         const client = interaction.client;
         const TicketModel = client.models?.Ticket;
@@ -20,12 +31,11 @@ module.exports = {
         try {
             await interaction.reply('Archiving logs and shutting down this ticket channel...');
 
-            // Retrieve the active mock testing configuration profile safely
+            // Fetch the mock testing environment configuration fallback profile
             const moduleConfig = client.configurations?.tickets?.config?.[0] || require('../config.json');
 
-            // CRITICAL JEST FIX: Route the function call through module.exports 
-            // This allows Jest's spy wrapper to intercept and log the execution call
-            await module.exports.closeTicket(client, interaction, dbTicket, moduleConfig);
+            // Invoke via the direct variable name so Jest registers the execution call stack
+            await closeTicket(client, interaction, dbTicket, moduleConfig);
 
         } catch (error) {
             console.error('Failed to properly shut down ticket channel:', error);
@@ -33,10 +43,5 @@ module.exports = {
                 await interaction.reply({ content: 'An unexpected error occurred while trying to close this ticket.', ephemeral: true });
             }
         }
-    },
-
-    // The precise function signature and placement expected by the unit test suite
-    async closeTicket(client, interaction, dbTicket, config) {
-        return await TicketManager.closeTicket(interaction.channel, dbTicket, client);
     }
 };
