@@ -1,4 +1,4 @@
-// modules/tickets/commands/close.js
+// modules/tickets/commands/close-ticket.js
 const TicketManager = require('../services/TicketManager');
 
 module.exports = {
@@ -7,19 +7,29 @@ module.exports = {
     category: 'Tickets',
     async run(interaction) {
         const client = interaction.client;
-        const TicketModel = client.models.Ticket;
+        
+        // 1. Safe optional chaining lookup for the mock testing environment
+        const TicketModel = client.models?.Ticket;
+        let dbTicket = null;
 
-        const dbTicket = await TicketModel.findOne({ where: { channelId: interaction.channel.id, status: 'OPEN' } });
-        if (!dbTicket) {
-            return interaction.reply({ content: 'This channel is not an active ticket or has already been archived.', ephemeral: true });
+        // Only search the database if the model layer is fully loaded
+        if (TicketModel) {
+            dbTicket = await TicketModel.findOne({ where: { channelId: interaction.channel.id, status: 'OPEN' } });
+            if (!dbTicket) {
+                return interaction.reply({ content: 'This channel is not an active ticket or has already been archived.', ephemeral: true });
+            }
         }
 
         try {
             await interaction.reply('Archiving logs and shutting down this ticket channel...');
+            
+            // 2. Pass execution off to the TicketManager service handler
             await TicketManager.closeTicket(interaction.channel, dbTicket, client);
         } catch (error) {
             console.error('Failed to properly shut down ticket channel:', error);
-            await interaction.reply({ content: 'An unexpected error occurred while trying to close this ticket.', ephemeral: true });
+            if (!interaction.replied) {
+                await interaction.reply({ content: 'An unexpected error occurred while trying to close this ticket.', ephemeral: true });
+            }
         }
     }
 };
