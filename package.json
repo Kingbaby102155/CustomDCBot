@@ -52,14 +52,14 @@
   "overrides": {
     "uuid": "^11.1.1"
   },
-  "allowScripts": {
+    "allowScripts": {
     "bufferutil@4.1.0": true,
     "fsevents@2.3.3": true,
     "sqlite3@6.0.1": true,
-    "unrs-resolver@1.12.2": true,
+    "unrs-resolver@1.1.2.2": true,
     "utf-8-validate@6.0.6": true
   },
-    "jest": {
+  "jest": {
     "modulePathIgnorePatterns": [
       "<rootDir>/tests/tickets"
     ]
