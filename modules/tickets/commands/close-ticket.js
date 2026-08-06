@@ -20,12 +20,12 @@ module.exports = {
         try {
             await interaction.reply('Archiving logs and shutting down this ticket channel...');
 
-            // 1. Fetch the exact configuration block the test framework passes
+            // Retrieve the active mock testing configuration profile safely
             const moduleConfig = client.configurations?.tickets?.config?.[0] || require('../config.json');
 
-            // 2. Invoke the functional signature expected by Jest tests
-            // Arguments: client, interaction, database/channel context, configuration
-            await closeTicket(client, interaction, dbTicket, moduleConfig);
+            // CRITICAL JEST FIX: Route the function call through module.exports 
+            // This allows Jest's spy wrapper to intercept and log the execution call
+            await module.exports.closeTicket(client, interaction, dbTicket, moduleConfig);
 
         } catch (error) {
             console.error('Failed to properly shut down ticket channel:', error);
@@ -33,13 +33,10 @@ module.exports = {
                 await interaction.reply({ content: 'An unexpected error occurred while trying to close this ticket.', ephemeral: true });
             }
         }
+    },
+
+    // The precise function signature and placement expected by the unit test suite
+    async closeTicket(client, interaction, dbTicket, config) {
+        return await TicketManager.closeTicket(interaction.channel, dbTicket, client);
     }
 };
-
-// 3. Isolated function keeping backward-compatibility with the repository's unit tests
-async function closeTicket(client, interaction, dbTicket, config) {
-    return await TicketManager.closeTicket(interaction.channel, dbTicket, client);
-}
-
-// 4. Export the explicit sub-method so test suites can spy on or mock it directly
-module.exports.closeTicket = closeTicket;
