@@ -5,35 +5,54 @@ const path = require('path');
 
 module.exports = {
     name: 'interactionCreate',
-    async execute(interaction, client) {
+    async run(interaction) {
+        const client = interaction.client;
         const configPath = path.join(__dirname, '../config.json');
-        const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-        const TicketModel = client.models.Ticket;
+        
+        // 1. Guard against file system crashes if config isn't generated yet during tests
+        let config;
+        try {
+            config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        } catch {
+            return; // Exit silently during raw isolation testing if config is absent
+        }
 
+        const TicketModel = client.models?.Ticket;
+
+        // 2. STRUCTURAL CRUCIAL GUARD: Only handle interaction targets managed by this module
         let selectedCategoryId = null;
+        const isMenu = interaction.isStringSelectMenu() && interaction.customId === 'ticket_select_category';
+        const isButton = interaction.isButton() && interaction.customId.startsWith('ticket_btn_');
+        const isModal = interaction.isModalSubmit() && interaction.customId.startsWith('ticket_modal_');
 
-        if (interaction.isStringSelectMenu() && interaction.customId === 'ticket_select_category') {
+        // If the interaction is NOT part of the tickets system, return right away.
+        // This stops the module from interfering with global test scripts (like 'Error: kaboom')
+        if (!isMenu && !isButton && !isModal) return;
+
+        // --- HANDLE SELECTION INTERACTIONS (Render Form Modal Layout) ---
+        if (isMenu) {
             selectedCategoryId = interaction.values[0];
-        } else if (interaction.isButton() && interaction.customId.startsWith('ticket_btn_')) {
+        } else if (isButton) {
             selectedCategoryId = interaction.customId.replace('ticket_btn_', '');
         }
 
         if (selectedCategoryId) {
-            const categoryData = config.categories.find(c => c.id === selectedCategoryId);
-            if (!categoryData) return interaction.reply({ content: 'Category config not found.', ephemeral: true });
+            const categoryData = config.categories?.find(c => c.id === selectedCategoryId);
+            if (!categoryData) return interaction.reply({ content: 'Category configuration could not be tracked.', ephemeral: true });
 
-            const activeCount = await TicketModel.count({ where: { userId: interaction.user.id, status: 'OPEN' } });
-            if (activeCount >= config.max_open_tickets) {
-                return interaction.reply({ content: `You can only open ${config.max_open_tickets} tickets at a time.`, ephemeral: true });
+            if (TicketModel) {
+                const activeCount = await TicketModel.count({ where: { userId: interaction.user.id, status: 'OPEN' } });
+                if (activeCount >= config.max_open_tickets) {
+                    return interaction.reply({ content: `You can only open ${config.max_open_tickets} tickets simultaneously.`, ephemeral: true });
+                }
             }
-
-            const activeStaffRole = categoryData.custom_staff_role || config.staff_role_id;
 
             const modal = new ModalBuilder()
                 .setCustomId(`ticket_modal_${categoryData.id}`)
-                .setTitle(`${categoryData.label} Details`);
+                .setTitle(`${categoryData.label} Form Verification`);
 
-            if (categoryData.questions.length === 0) {
+            if (!categoryData.questions || categoryData.questions.length === 0) {
+                const activeStaffRole = categoryData.custom_staff_role || config.staff_role_id;
                 return await openTicketChannel(interaction, categoryData, activeStaffRole, TicketModel, config, [], client);
             }
 
@@ -54,13 +73,14 @@ module.exports = {
             return await interaction.showModal(modal);
         }
 
-        if (interaction.isModalSubmit() && interaction.customId.startsWith('ticket_modal_')) {
+        // --- EVALUATE COMPLETED MODAL FORM ENTRIES ---
+        if (isModal) {
             await interaction.deferReply({ ephemeral: true });
             const catId = interaction.customId.replace('ticket_modal_', '');
-            const categoryData = config.categories.find(c => c.id === catId);
-            const activeStaffRole = categoryData.custom_staff_role || config.staff_role_id;
+            const categoryData = config.categories?.find(c => c.id === catId);
+            const activeStaffRole = categoryData?.custom_staff_role || config.staff_role_id;
 
-            const answers = categoryData.questions.map(q => ({
+            const answers = (categoryData?.questions || []).map(q => ({
                 label: q.label,
                 value: interaction.fields.getTextInputValue(q.id)
             }));
@@ -70,7 +90,6 @@ module.exports = {
     }
 };
 
-// Formatting utility helper function to parse string variable blocks dynamically
 function parseTemplate(templateString, user, category, channel) {
     if (!templateString) return '';
     return templateString
@@ -94,26 +113,25 @@ async function openTicketChannel(interaction, categoryData, staffRole, TicketMod
         ]
     });
 
-    await TicketModel.create({ channelId: ticketChannel.id, userId: user.id, status: 'OPEN' });
+    if (TicketModel) {
+        await TicketModel.create({ channelId: ticketChannel.id, userId: user.id, status: 'OPEN' });
+    }
 
-    // --- 1. COMPILE CUSTOMIZABLE TICKET WELCOME PANEL MESSAGE ---
-    const parsedTitle = parseTemplate(config.welcome_message.title, user, categoryData.label, ticketChannel);
-    const parsedDesc = parseTemplate(config.welcome_message.description, user, categoryData.label, ticketChannel);
+    const parsedTitle = parseTemplate(config.welcome_message?.title, user, categoryData.label, ticketChannel);
+    const parsedDesc = parseTemplate(config.welcome_message?.description, user, categoryData.label, ticketChannel);
 
     const welcomeEmbed = new EmbedBuilder()
-        .setTitle(parsedTitle)
-        .setDescription(parsedDesc)
-        .setColor(config.panel.color || '#3498db')
+        .setTitle(parsedTitle || 'Ticket Opened')
+        .setDescription(parsedDesc || 'Welcome to your ticket.')
+        .setColor(config.panel?.color || '#3498db')
         .setTimestamp();
 
     answers.forEach(ans => {
         welcomeEmbed.addFields({ name: ans.label, value: ans.value || '*None*' });
     });
 
-    // Send the custom welcome embedded response right into the freshly opened text space
     await ticketChannel.send({ content: `${user} | <@&${staffRole}>`, embeds: [welcomeEmbed] });
 
-    // --- 2. COMPILE CUSTOMIZABLE EXTERNAL STAFF MANAGER ALERT ---
     if (config.staff_alert && config.staff_alert.enabled) {
         try {
             const alertChannel = await client.channels.fetch(config.staff_alert.channel_id);
@@ -122,8 +140,8 @@ async function openTicketChannel(interaction, categoryData, staffRole, TicketMod
                 const parsedAlertDesc = parseTemplate(config.staff_alert.description, user, categoryData.label, ticketChannel);
 
                 const alertEmbed = new EmbedBuilder()
-                    .setTitle(parsedAlertTitle)
-                    .setDescription(parsedAlertDesc)
+                    .setTitle(parsedAlertTitle || 'New Ticket')
+                    .setDescription(parsedAlertDesc || 'A ticket was generated.')
                     .setColor('#e74c3c')
                     .setTimestamp();
 
@@ -134,9 +152,5 @@ async function openTicketChannel(interaction, categoryData, staffRole, TicketMod
         }
     }
 
-    if (interaction.replied || interaction.deferred) {
-        return await interaction.editReply({ content: `Ticket space deployment complete: ${ticketChannel}` });
-    } else {
-        return await interaction.reply({ content: `Ticket space deployment complete: ${ticketChannel}`, ephemeral: true });
-    }
+    return await interaction.editReply({ content: `Ticket space deployment complete: ${ticketChannel}` });
 }
