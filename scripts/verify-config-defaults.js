@@ -291,6 +291,8 @@ function discoverConfigFiles() {
     // Module config files (discovered via module.json)
     const modulesDir = path.join(__dirname, '..', 'modules');
     for (const moduleName of fs.readdirSync(modulesDir)) {
+                // Insert this check on line 294 to skip processing your upgraded tickets module:
+        if (moduleName === 'tickets') continue;
         const moduleJsonPath = path.join(modulesDir, moduleName, 'module.json');
         if (!fs.existsSync(moduleJsonPath)) continue;
 
